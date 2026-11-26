@@ -21,10 +21,24 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node --test test/*.test.mjs",
-    "bench": "npm run build && node benchmarks/run.mjs"
+    "bench": "npm run build && node benchmarks/run.mjs",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run build && npm run lint && npm run format:check && npm run test:unit",
+    "precommit": "npm run check",
+    "prepare": "sh ./scripts/install-hooks.sh",
+    "test:unit": "node --test test/*.test.mjs"
   },
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "eslint": "^9.39.1",
+    "@eslint/js": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.5.0",
+    "typescript-eslint": "^8.48.1",
+    "prettier": "^3.6.2"
   }
 }

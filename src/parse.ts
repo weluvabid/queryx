@@ -14,11 +14,14 @@ export function parse(input: string, options: ParseOptions = {}): ParsedQuery {
     const key = decodeComponentSpan(input, keyStart, keyEnd, mode);
     const value = hasEquals ? decodeComponentSpan(input, valueStart, valueEnd, mode) : null;
 
-    if (duplicates === 'first' && Object.hasOwn(result, key)) return;
+    if (duplicates === 'first' && Object.hasOwn(result, key)) {return;}
+
     if (duplicates === 'last') {
       result[key] = value;
+
       return;
     }
+
     appendQueryValue(result, key, value);
   });
 

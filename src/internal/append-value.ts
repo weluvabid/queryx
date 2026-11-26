@@ -6,9 +6,12 @@ export function appendQueryValue(
 ): void {
   if (!Object.hasOwn(target, key)) {
     target[key] = value;
+
     return;
   }
+
   const previous = target[key]!;
-  if (Array.isArray(previous)) previous.push(value);
-  else target[key] = [previous, value];
+
+  if (Array.isArray(previous)) {previous.push(value);}
+  else {target[key] = [previous, value];}
 }

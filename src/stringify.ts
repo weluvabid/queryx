@@ -11,7 +11,8 @@ function serialize(
   encoder: ComponentEncoder | undefined,
 ): string {
   const keys = Object.keys(input);
-  if (options.order === 'sorted') keys.sort();
+
+  if (options.order === 'sorted') {keys.sort();}
 
   const skipNull = options.skipNull ?? false;
   const skipEmpty = options.skipEmptyString ?? false;
@@ -21,7 +22,8 @@ function serialize(
   for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
     const key = keys[keyIndex]!;
     const raw = input[key];
-    if (raw === undefined) continue;
+
+    if (raw === undefined) {continue;}
 
     const encodedKey = encoder ? encoder(key) : key;
     const array = Array.isArray(raw) ? raw : undefined;
@@ -31,20 +33,26 @@ function serialize(
     // temporary one-element array or calling a per-item closure.
     while (array ? itemIndex < array.length : itemIndex === 0) {
       const item = (array ? array[itemIndex++] : (itemIndex++, raw)) as Scalar;
-      if (item === undefined) continue;
+
+      if (item === undefined) {continue;}
 
       const value = toQueryScalar(item);
+
       if (value === null) {
-        if (skipNull) continue;
-        if (!first) output += '&';
+        if (skipNull) {continue;}
+
+        if (!first) {output += '&';}
+
         output += encodedKey;
         first = false;
         continue;
       }
-      if (skipEmpty && value === '') continue;
 
-      if (!first) output += '&';
-      output += encodedKey + '=' + (encoder ? encoder(value) : value);
+      if (skipEmpty && value === '') {continue;}
+
+      if (!first) {output += '&';}
+
+      output += `${encodedKey  }=${  encoder ? encoder(value) : value}`;
       first = false;
     }
   }
@@ -58,6 +66,9 @@ export function stringify(input: QueryRecord, options: StringifyOptions = {}): s
 }
 
 /** Serialize using WHATWG application/x-www-form-urlencoded encoding. */
-export function stringifyForm(input: QueryRecord, options: Omit<StringifyOptions, 'encode'> = {}): string {
+export function stringifyForm(
+  input: QueryRecord,
+  options: Omit<StringifyOptions, 'encode'> = {},
+): string {
   return serialize(input, options, encodeFormComponent);
 }

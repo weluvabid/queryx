@@ -33,14 +33,17 @@ class ScanEntryImpl implements ScanEntry {
 export function scan(input: string): IterableIterator<ScanEntry> {
   const length = input.length;
   let cursor = length > 0 && input.charCodeAt(0) === CHAR_CODE.QUESTION_MARK ? 1 : 0;
-  if (cursor < length && input.charCodeAt(cursor) === CHAR_CODE.HASH) cursor = length;
+
+  if (cursor < length && input.charCodeAt(cursor) === CHAR_CODE.HASH) {cursor = length;}
 
   return (function* (): IterableIterator<ScanEntry> {
     while (cursor < length) {
       const end = findSegmentEnd(input, cursor, length);
+
       if (end > cursor) {
         const equals = findEquals(input, cursor, end);
         const hasEquals = equals < end;
+
         yield new ScanEntryImpl(
           input,
           cursor,
@@ -50,7 +53,9 @@ export function scan(input: string): IterableIterator<ScanEntry> {
           hasEquals,
         );
       }
-      if (end >= length || input.charCodeAt(end) === CHAR_CODE.HASH) return;
+
+      if (end >= length || input.charCodeAt(end) === CHAR_CODE.HASH) {return;}
+
       cursor = end + 1;
     }
   })();

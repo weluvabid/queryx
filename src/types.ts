@@ -1,8 +1,8 @@
 import type { DECODE_MODES, DUPLICATE_MODES, QUERY_ORDERS } from './constants.js';
 
-export type DecodeMode = typeof DECODE_MODES[number];
-export type DuplicateMode = typeof DUPLICATE_MODES[number];
-export type QueryOrder = typeof QUERY_ORDERS[number];
+export type DecodeMode = (typeof DECODE_MODES)[number];
+export type DuplicateMode = (typeof DUPLICATE_MODES)[number];
+export type QueryOrder = (typeof QUERY_ORDERS)[number];
 
 export interface ScanEntry {
   readonly source: string;
@@ -28,5 +28,12 @@ export interface StringifyOptions {
   readonly skipEmptyString?: boolean;
 }
 
-export type QueryValue = string | number | bigint | boolean | null | undefined | readonly (string | number | bigint | boolean | null | undefined)[];
+export type QueryValue =
+  | string
+  | number
+  | bigint
+  | boolean
+  | null
+  | undefined
+  | readonly (string | number | bigint | boolean | null | undefined)[];
 export type QueryRecord = Readonly<Record<string, QueryValue>>;
