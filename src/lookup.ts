@@ -37,6 +37,24 @@ export function pick(input: string, keys: readonly string[], mode: DecodeMode = 
   const wanted = new Set(keys);
   const result = Object.create(null) as Record<string, string | null | (string | null)[]>;
   if (wanted.size === 0) return result;
+
+  // A single requested key can be compared against raw spans without decoding
+  // every input key. Multi-key selection keeps Set membership for O(1) lookup.
+  if (wanted.size === 1) {
+    const target = wanted.values().next().value as string;
+    walk(input, (keyStart, keyEnd, valueStart, valueEnd, hasEquals) => {
+      if (!componentSpanEquals(input, keyStart, keyEnd, target, mode)) return;
+      const value = hasEquals ? decodeComponentSpan(input, valueStart, valueEnd, mode) : null;
+      if (!Object.hasOwn(result, target)) result[target] = value;
+      else {
+        const previous = result[target]!;
+        if (Array.isArray(previous)) previous.push(value);
+        else result[target] = [previous, value];
+      }
+    });
+    return result;
+  }
+
   walk(input, (keyStart, keyEnd, valueStart, valueEnd, hasEquals) => {
     const key = decodeComponentSpan(input, keyStart, keyEnd, mode);
     if (!wanted.has(key)) return;

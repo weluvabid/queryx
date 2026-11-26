@@ -80,6 +80,7 @@ const benchmarks = [
   ['QueryX parse', () => parse(query)],
   ['URLSearchParams -> object', () => parseNative(query)],
   ['QueryX selective get (last)', () => get(query, 'key99')],
+  ['QueryX pick (1 of 100)', () => pick(query, ['key99'])],
   ['QueryX pick (3 of 100)', () => pick(query, ['key10', 'key50', 'key99'])],
   ['QueryX pick (all 100)', () => pick(query, allKeys)],
   ['QueryX scan (100 entries)', () => {
@@ -136,15 +137,15 @@ if (stringify(object) !== expectedRfc3986) {
   throw new Error('QueryX RFC 3986 stringify benchmark produced unexpected output');
 }
 
-// Explicitly report the current form-encoding difference instead of silently
-// treating RFC-3986-derived QueryX output as WHATWG form encoding.
+// Form encoding is specified to match WHATWG URLSearchParams exactly.
 const queryxForm = stringifyForm(specialObject);
 const nativeForm = new URLSearchParams(specialObject).toString();
-console.log(`Form encoding matches WHATWG URLSearchParams: ${queryxForm === nativeForm ? 'yes' : 'no'}`);
 if (queryxForm !== nativeForm) {
-  console.log(`  QueryX:             ${queryxForm}`);
-  console.log(`  URLSearchParams:    ${nativeForm}`);
+  throw new Error(
+    `Form encoding mismatch\\n  QueryX:          ${queryxForm}\\n  URLSearchParams: ${nativeForm}`,
+  );
 }
+console.log('Form encoding matches WHATWG URLSearchParams: yes');
 
 console.log(
   `Node ${process.version}; ${iterations.toLocaleString()} iterations/sample; ` +

@@ -37,6 +37,13 @@ test('selective operations preserve duplicate and missing distinctions', () => {
   assert.deepEqual(pick(query, ['x']), Object.assign(Object.create(null), { x: ['1', '2'] }));
 });
 
+test('pick handles a single requested key without decoding unrelated keys', () => {
+  assert.deepEqual(pick('?a%20b=1&x=first&x=second&flag', ['x']), Object.assign(Object.create(null), { x: ['first', 'second'] }));
+  assert.deepEqual(pick('?a=1', ['missing']), Object.create(null));
+  assert.throws(() => pick('?x=1&bad%ZZ=2', ['x'], 'throw'), URIError);
+  assert.throws(() => pick('?bad%ZZ=2', ['missing'], 'throw'), URIError);
+});
+
 test('scan exposes raw spans and defers decoding', () => {
   const [entry] = [...scan('?a%20b=c+d')];
   assert.equal(entry.source.slice(entry.keyStart, entry.keyEnd), 'a%20b');
@@ -74,15 +81,21 @@ test('stringifies supported scalar values and arrays', () => {
   assert.equal(stringify({ q: '\uD800' }), 'q=%EF%BF%BD');
 });
 
-test('uses RFC 3986 escaping and form-space encoding consistently', () => {
-  assert.equal(stringify({ value: "!'()* ~" }), 'value=%21%27%28%29%2A%20~');
-  assert.equal(stringifyForm({ value: "!'()* ~" }), 'value=%21%27%28%29%2A+~');
+test('uses RFC 3986 escaping and WHATWG form encoding', () => {
+  const input = { value: "!'()* ~" };
+  assert.equal(stringify(input), 'value=%21%27%28%29%2A%20~');
+  assert.equal(stringifyForm(input), new URLSearchParams(input).toString());
+  assert.equal(stringifyForm(input), 'value=%21%27%28%29*+%7E');
 });
 
-test('form serialization uses plus for spaces and RFC 3986 escaping for reserved characters', () => {
-  const input = { value: "!'()*~ a" };
-  assert.equal(stringifyForm(input), 'value=%21%27%28%29%2A~+a');
-  assert.notEqual(stringifyForm(input), new URLSearchParams(input).toString());
+test('form serialization matches WHATWG punctuation, spaces, and Unicode', () => {
+  const input = {
+    punctuation: "!'()*~",
+    spaces: 'one two three',
+    unicode: '✓ café 東京',
+    reserved: 'a&b=c/d?e#f',
+  };
+  assert.equal(stringifyForm(input), new URLSearchParams(input).toString());
 });
 
 test('rejects non-finite numbers and unsupported objects', () => {
@@ -220,7 +233,7 @@ test('component encoders preserve RFC 3986 and form semantics across edge cases'
     const expectedRfc = encodeURIComponent(normalized).replace(/[!'()*]/g, character =>
       `%${character.charCodeAt(0).toString(16).toUpperCase()}`,
     );
-    const expectedForm = expectedRfc.replace(/%20/g, '+');
+    const expectedForm = new URLSearchParams([['x', value]]).toString().slice(2);
     assert.equal(encodeComponent(value), expectedRfc, `RFC encoding: ${JSON.stringify(value)}`);
     assert.equal(encodeFormComponent(value), expectedForm, `form encoding: ${JSON.stringify(value)}`);
   }
