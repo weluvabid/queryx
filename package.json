@@ -40,5 +40,27 @@
     "globals": "^16.5.0",
     "typescript-eslint": "^8.48.1",
     "prettier": "^3.6.2"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weluvabid/queryx.git"
+  },
+  "homepage": "https://github.com/weluvabid/queryx#readme",
+  "bugs": {
+    "url": "https://github.com/weluvabid/queryx/issues"
+  },
+  "keywords": [
+    "query-string",
+    "querystring",
+    "url",
+    "parser",
+    "serializer",
+    "typescript",
+    "javascript",
+    "urlsearchparams"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Abid"
 }

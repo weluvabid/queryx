@@ -2,8 +2,4 @@ node_modules/
 dist/
 coverage/
 *.tgz
-
-# Local dependencies and generated output
-node_modules/
-dist/
-coverage/
+.idea/
