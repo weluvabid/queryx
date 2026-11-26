@@ -6,6 +6,12 @@ A fast, dependency-free query-string parser, serializer and selective lookup lib
 npm install @weluvabid/queryx
 ```
 
+## Try QueryX
+
+- **[Run the complete API example on StackBlitz](https://stackblitz.com/edit/queryx?file=index.js)** — a runnable Vanilla Node.js example covering parsing, selective lookup, scanning, decoding modes, serialization, and edge cases.
+- **[Parsing & Lookup benchmarks](https://bencher.dev/perf/queryx?branches=01a217cf-c51e-7790-8a10-603f75f50b83&testbeds=01a217cf-c51e-7790-8a10-6041ebea368e&benchmarks=01a217cf-c526-7338-9ba9-67f709240fed,01a217cf-c521-7352-8ba9-5863caa7f637,01a217cf-c523-75bd-b504-469bcda8c027,01a217cf-c523-75bd-b504-46982fd01e2a,01a217cf-c520-70ce-9d4b-a5c5362ab2a1,01a217cf-c522-7779-a213-a21743d6c04c&measures=01a217cf-c520-70ce-9d4b-a5c1096b40b4,01a217cf-c520-70ce-9d4b-a5c0d0338549&layout=stacked)** — interactive latency and throughput history.
+- **[Serialization benchmarks](https://bencher.dev/perf/queryx?branches=01a217cf-c51e-7790-8a10-603f75f50b83&testbeds=01a217cf-c51e-7790-8a10-6041ebea368e&benchmarks=01a217cf-c524-72d6-9c12-28689d321ec7,01a217cf-c527-746c-bb67-e0fb6d249758,01a217cf-c525-70b3-8b98-7cdc540d0a4c,01a217cf-c525-70b3-8b98-7cd6e86067d2,01a217cf-c527-746c-bb67-e0f8b8b25151,01a217cf-c524-72d6-9c12-286bfd206938&measures=01a217cf-c520-70ce-9d4b-a5c1096b40b4,01a217cf-c520-70ce-9d4b-a5c0d0338549&metrics=value&layout=stacked)** — interactive latency and throughput history.
+
 ## Why QueryX
 
 QueryX is built for fast query-string handling without parsing more than you need.
