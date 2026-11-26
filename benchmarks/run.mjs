@@ -11,6 +11,15 @@ const specialObject = {
   unicode: '✓ café 東京',
   reserved: 'a&b=c/d?e#f',
 };
+const reservedObject = Object.fromEntries(
+  Array.from({ length: 100 }, (_, i) => [`key!${i}()*`, `!value!${i}()*&=/`]),
+);
+const mixedObject = Object.fromEntries(
+  Array.from({ length: 100 }, (_, i) => [
+    `key${i}${i % 4 === 0 ? ' !()*' : ''}`,
+    i % 4 === 0 ? `reserved !()* &=${i}` : i % 4 === 1 ? `spaces value ${i}` : i % 4 === 2 ? `unicode ✓ café ${i}` : `plain-${i}`,
+  ]),
+);
 const iterations = Number(process.env.ITERATIONS ?? 100_000);
 const samplesCount = Number(process.env.SAMPLES ?? 5);
 const warmupIterations = Number(process.env.WARMUP ?? 2_000);
@@ -73,17 +82,22 @@ const benchmarks = [
   ['URLSearchParams parse + get', () => new URLSearchParams(query).get('key99')],
   ['URLSearchParams get (pre-parsed)', () => nativeParams.get('key99')],
   ['QueryX stringify (RFC 3986)', () => stringify(object)],
+  ['QueryX stringify (reserved-heavy)', () => stringify(reservedObject)],
+  ['QueryX stringify (mixed)', () => stringify(mixedObject)],
   ['QueryX stringifyForm', () => stringifyForm(object)],
+  ['QueryX stringifyForm (mixed)', () => stringifyForm(mixedObject)],
   ['URLSearchParams stringify', () => new URLSearchParams(object).toString()],
   ['decode span (encoded)', () => decodeComponentSpan(query, valueStart, valueEnd)],
   ['decode slice (encoded)', () => decodeComponent(query.slice(valueStart, valueEnd))],
   ['encodeComponent (safe ASCII)', () => encodeComponent('keyName_99-~')],
   ['encodeComponent (ASCII)', () => encodeComponent('value with spaces')],
   ['encodeComponent (reserved)', () => encodeComponent("!'()*~&=/?#")],
+  ['encodeComponent (repeated reserved)', () => encodeComponent("!'()*~&=/?#".repeat(8))],
   ['encodeComponent (Unicode)', () => encodeComponent('✓ café 東京')],
   ['encodeFormComponent (no spaces)', () => encodeFormComponent('value-without-spaces')],
   ['encodeFormComponent (spaces)', () => encodeFormComponent('value with spaces')],
   ['encodeFormComponent (reserved)', () => encodeFormComponent("!'()*~&=/?#")],
+  ['encodeFormComponent (mixed)', () => encodeFormComponent("key with spaces & punctuation !()* café 東京")],
 ];
 
 

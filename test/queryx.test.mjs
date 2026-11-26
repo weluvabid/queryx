@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { get, getAll, has, parse, pick, scan, stringify, stringifyForm } from '../dist/index.js';
-import { decodeComponent, decodeComponentSpan } from '../dist/codec.js';
+import { decodeComponent, decodeComponentSpan, encodeComponent, encodeFormComponent } from '../dist/codec.js';
 
 test('parses ordinary, empty, duplicate, and valueless parameters', () => {
   const result = parse('?a=1&a=2&empty=&flag&=blank&&x=3#fragment');
@@ -186,4 +186,32 @@ test('stringifies large flat records without changing ordering or separators', (
   assert.equal(output.split('&').length, 15000);
   assert.ok(output.startsWith('k0=v0&k1=v1&'));
   assert.ok(output.endsWith('k14999=v14999'));
+});
+
+
+test('component encoders preserve RFC 3986 and form semantics across edge cases', () => {
+  const values = [
+    '',
+    'plain-ascii_123.~',
+    "!'()*~",
+    'a b  c',
+    'a&b=c/d?e#f',
+    '✓ café 東京',
+    '\uD800',
+    '\uDC00',
+    'valid-😀-surrogate-pair',
+    '%20+literal',
+  ];
+
+  for (const value of values) {
+    const normalized = value
+      .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/g, '\uFFFD')
+      .replace(/(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '\uFFFD');
+    const expectedRfc = encodeURIComponent(normalized).replace(/[!'()*]/g, character =>
+      `%${character.charCodeAt(0).toString(16).toUpperCase()}`,
+    );
+    const expectedForm = expectedRfc.replace(/%20/g, '+');
+    assert.equal(encodeComponent(value), expectedRfc, `RFC encoding: ${JSON.stringify(value)}`);
+    assert.equal(encodeFormComponent(value), expectedForm, `form encoding: ${JSON.stringify(value)}`);
+  }
 });
