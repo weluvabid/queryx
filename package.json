@@ -1,6 +1,6 @@
 {
   "name": "@weluvabid/queryx",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A fast, predictable query-string parser and serializer for JavaScript and TypeScript.",
   "type": "module",
   "sideEffects": false,
