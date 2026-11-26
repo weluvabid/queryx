@@ -29,7 +29,8 @@
     "check": "npm run build && npm run lint && npm run format:check && npm run test:unit",
     "precommit": "npm run check",
     "prepare": "sh ./scripts/install-hooks.sh",
-    "test:unit": "node --test test/*.test.mjs"
+    "test:unit": "node --test test/*.test.mjs",
+    "bench:bencher": "npm run build && node benchmarks/run.mjs --bencher-output bencher-results.json"
   },
   "license": "MIT",
   "devDependencies": {

@@ -190,6 +190,21 @@ npm install --no-save query-string
 
 Configure benchmark runs with `ITERATIONS`, `SAMPLES` (minimum 3) and `WARMUP`.
 
+### Continuous benchmarking with Bencher
+
+QueryX exports its existing benchmark results in [Bencher Metric Format](https://bencher.dev/docs/reference/bencher-metric-format/). Each benchmark reports:
+
+- **Latency:** median time per operation, recorded in nanoseconds.
+- **Throughput:** operations per second, calculated from the same measured sample.
+
+The reported value is the median across the configured samples. The benchmark workload, warmup, iteration count, and terminal output remain the same.
+
+Run the exporter locally:
+
+```sh
+npm run bench:bencher
+```
+
 ## License
 
 MIT
