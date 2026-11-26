@@ -1,9 +1,10 @@
 import { performance } from 'node:perf_hooks';
 import { URLSearchParams } from 'node:url';
-import { get, parse, stringify, stringifyForm } from '../dist/index.js';
+import { get, parse, pick, scan, stringify, stringifyForm } from '../dist/index.js';
 import { decodeComponent, decodeComponentSpan, encodeComponent, encodeFormComponent } from '../dist/codec.js';
 
 const query = Array.from({ length: 100 }, (_, i) => `key${i}=value%20${i}`).join('&');
+const allKeys = Array.from({ length: 100 }, (_, i) => `key${i}`);
 const object = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [`key${i}`, `value ${i}`]));
 const specialObject = {
   punctuation: "!'()*~",
@@ -79,6 +80,13 @@ const benchmarks = [
   ['QueryX parse', () => parse(query)],
   ['URLSearchParams -> object', () => parseNative(query)],
   ['QueryX selective get (last)', () => get(query, 'key99')],
+  ['QueryX pick (3 of 100)', () => pick(query, ['key10', 'key50', 'key99'])],
+  ['QueryX pick (all 100)', () => pick(query, allKeys)],
+  ['QueryX scan (100 entries)', () => {
+    let count = 0;
+    for (const entry of scan(query)) count += entry.keyEnd - entry.keyStart;
+    return count;
+  }],
   ['URLSearchParams parse + get', () => new URLSearchParams(query).get('key99')],
   ['URLSearchParams get (pre-parsed)', () => nativeParams.get('key99')],
   ['QueryX stringify (RFC 3986)', () => stringify(object)],

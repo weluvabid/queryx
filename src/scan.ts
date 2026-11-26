@@ -1,5 +1,34 @@
-import { decodeComponent } from './codec.js';
+import { decodeComponentSpan } from './codec.js';
 import type { DecodeMode, ScanEntry } from './types.js';
+
+/** One allocation per entry; decoding methods are shared on the prototype. */
+class ScanEntryImpl implements ScanEntry {
+  constructor(
+    readonly source: string,
+    readonly keyStart: number,
+    readonly keyEnd: number,
+    readonly valueStart: number,
+    readonly valueEnd: number,
+    readonly hasEquals: boolean,
+  ) {}
+
+  decodeKey(mode: DecodeMode = 'replace'): string {
+    return decodeComponentSpan(this.source, this.keyStart, this.keyEnd, mode);
+  }
+
+  decodeValue(mode: DecodeMode = 'replace'): string | null {
+    return this.hasEquals
+      ? decodeComponentSpan(this.source, this.valueStart, this.valueEnd, mode)
+      : null;
+  }
+
+  decode(mode: DecodeMode = 'replace'): { key: string; value: string | null } {
+    return {
+      key: this.decodeKey(mode),
+      value: this.decodeValue(mode),
+    };
+  }
+}
 
 /** Lazily iterate over raw query spans. Component strings are decoded only on demand. */
 export function scan(input: string): IterableIterator<ScanEntry> {
@@ -16,26 +45,15 @@ export function scan(input: string): IterableIterator<ScanEntry> {
       if (end > cursor) {
         let equals = cursor;
         while (equals < end && input.charCodeAt(equals) !== 61) equals++;
-        const keyStart = cursor;
         const hasEquals = equals < end;
-        const keyEnd = hasEquals ? equals : end;
-        const valueStart = hasEquals ? equals + 1 : end;
-        const valueEnd = end;
-        const entry: ScanEntry = {
-          source: input,
-          keyStart,
-          keyEnd,
-          valueStart,
-          valueEnd,
+        yield new ScanEntryImpl(
+          input,
+          cursor,
+          hasEquals ? equals : end,
+          hasEquals ? equals + 1 : end,
+          end,
           hasEquals,
-          decodeKey: (mode: DecodeMode = 'replace') => decodeComponent(input.slice(keyStart, keyEnd), mode),
-          decodeValue: (mode: DecodeMode = 'replace') => hasEquals ? decodeComponent(input.slice(valueStart, valueEnd), mode) : null,
-          decode: (mode: DecodeMode = 'replace') => ({
-            key: decodeComponent(input.slice(keyStart, keyEnd), mode),
-            value: hasEquals ? decodeComponent(input.slice(valueStart, valueEnd), mode) : null,
-          }),
-        };
-        yield entry;
+        );
       }
       if (end >= input.length || input.charCodeAt(end) === 35) return;
       cursor = end + 1;

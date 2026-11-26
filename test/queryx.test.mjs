@@ -44,6 +44,16 @@ test('scan exposes raw spans and defers decoding', () => {
   assert.equal(entry.decodeValue(), 'c d');
 });
 
+test('scan entries share decoding methods and preserve valueless spans', () => {
+  const entries = [...scan('?alpha=one&flag&beta%20key=two+words')];
+  assert.equal(entries.length, 3);
+  assert.equal(entries[0].decode, entries[1].decode);
+  assert.equal(entries[0].decodeKey(), 'alpha');
+  assert.equal(entries[0].decodeValue(), 'one');
+  assert.deepEqual(entries[1].decode(), { key: 'flag', value: null });
+  assert.deepEqual(entries[2].decode(), { key: 'beta key', value: 'two words' });
+});
+
 test('decoding modes are explicit', () => {
   assert.equal(parse('?x=%ZZ').x, '%ZZ');
   assert.equal(parse('?x=%ZZ', { decode: 'preserve' }).x, '%ZZ');
