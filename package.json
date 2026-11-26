@@ -1,0 +1,30 @@
+{
+  "name": "@weluvabid/queryx",
+  "version": "0.1.0",
+  "description": "A fast, predictable query-string parser and serializer for JavaScript and TypeScript.",
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "bench": "npm run build && node benchmarks/run.mjs"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}
