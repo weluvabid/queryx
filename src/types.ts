@@ -1,4 +1,8 @@
-export type DecodeMode = 'throw' | 'replace' | 'preserve';
+import type { DECODE_MODES, DUPLICATE_MODES, QUERY_ORDERS } from './constants.js';
+
+export type DecodeMode = typeof DECODE_MODES[number];
+export type DuplicateMode = typeof DUPLICATE_MODES[number];
+export type QueryOrder = typeof QUERY_ORDERS[number];
 
 export interface ScanEntry {
   readonly source: string;
@@ -14,11 +18,11 @@ export interface ScanEntry {
 
 export interface ParseOptions {
   readonly decode?: DecodeMode;
-  readonly duplicates?: 'combine' | 'first' | 'last';
+  readonly duplicates?: DuplicateMode;
 }
 
 export interface StringifyOptions {
-  readonly order?: 'insertion' | 'sorted';
+  readonly order?: QueryOrder;
   readonly encode?: boolean;
   readonly skipNull?: boolean;
   readonly skipEmptyString?: boolean;

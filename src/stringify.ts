@@ -1,12 +1,18 @@
 import { encodeComponent, encodeFormComponent } from './codec.js';
+import { toQueryScalar } from './internal/value.js';
 import type { QueryRecord, QueryValue, StringifyOptions } from './types.js';
 
 type Scalar = Exclude<QueryValue, readonly unknown[]>;
+type ComponentEncoder = (value: string) => string;
 
-export function stringify(input: QueryRecord, options: StringifyOptions = {}): string {
+function serialize(
+  input: QueryRecord,
+  options: Omit<StringifyOptions, 'encode'>,
+  encoder: ComponentEncoder | undefined,
+): string {
   const keys = Object.keys(input);
   if (options.order === 'sorted') keys.sort();
-  const encode = options.encode === false ? undefined : encodeComponent;
+
   const skipNull = options.skipNull ?? false;
   const skipEmpty = options.skipEmptyString ?? false;
   let output = '';
@@ -16,53 +22,29 @@ export function stringify(input: QueryRecord, options: StringifyOptions = {}): s
     const key = keys[keyIndex]!;
     const raw = input[key];
     if (raw === undefined) continue;
-    const encodedKey = encode ? encode(key) : key;
 
-    if (Array.isArray(raw)) {
-      for (let itemIndex = 0; itemIndex < raw.length; itemIndex++) {
-        const item = raw[itemIndex] as Scalar;
-        if (item === undefined) continue;
-        let value: string | null;
-        if (item === null) value = null;
-        else if (typeof item === 'string') value = item;
-        else if (typeof item === 'number') {
-          if (!Number.isFinite(item)) throw new TypeError('Queryx cannot serialize non-finite numbers');
-          value = String(item);
-        } else if (typeof item === 'bigint' || typeof item === 'boolean') value = String(item);
-        else throw new TypeError(`Unsupported query value: ${typeof item}`);
+    const encodedKey = encoder ? encoder(key) : key;
+    const array = Array.isArray(raw) ? raw : undefined;
+    let itemIndex = 0;
 
-        if (value === null) {
-          if (skipNull) continue;
-          if (!first) output += '&';
-          output += encodedKey;
-          first = false;
-        } else if (!(skipEmpty && value === '')) {
-          if (!first) output += '&';
-          output += encodedKey + '=' + (encode ? encode(value) : value);
-          first = false;
-        }
+    // One loop handles both scalar and array values without allocating a
+    // temporary one-element array or calling a per-item closure.
+    while (array ? itemIndex < array.length : itemIndex === 0) {
+      const item = (array ? array[itemIndex++] : (itemIndex++, raw)) as Scalar;
+      if (item === undefined) continue;
+
+      const value = toQueryScalar(item);
+      if (value === null) {
+        if (skipNull) continue;
+        if (!first) output += '&';
+        output += encodedKey;
+        first = false;
+        continue;
       }
-      continue;
-    }
+      if (skipEmpty && value === '') continue;
 
-    const item = raw as Scalar;
-    let value: string | null;
-    if (item === null || item === undefined) value = null;
-    else if (typeof item === 'string') value = item;
-    else if (typeof item === 'number') {
-      if (!Number.isFinite(item)) throw new TypeError('Queryx cannot serialize non-finite numbers');
-      value = String(item);
-    } else if (typeof item === 'bigint' || typeof item === 'boolean') value = String(item);
-    else throw new TypeError(`Unsupported query value: ${typeof item}`);
-
-    if (value === null) {
-      if (skipNull) continue;
       if (!first) output += '&';
-      output += encodedKey;
-      first = false;
-    } else if (!(skipEmpty && value === '')) {
-      if (!first) output += '&';
-      output += encodedKey + '=' + (encode ? encode(value) : value);
+      output += encodedKey + '=' + (encoder ? encoder(value) : value);
       first = false;
     }
   }
@@ -70,68 +52,12 @@ export function stringify(input: QueryRecord, options: StringifyOptions = {}): s
   return output;
 }
 
+/** Serialize using RFC 3986 component encoding by default. */
+export function stringify(input: QueryRecord, options: StringifyOptions = {}): string {
+  return serialize(input, options, options.encode === false ? undefined : encodeComponent);
+}
+
+/** Serialize using WHATWG application/x-www-form-urlencoded encoding. */
 export function stringifyForm(input: QueryRecord, options: Omit<StringifyOptions, 'encode'> = {}): string {
-  const keys = Object.keys(input);
-  if (options.order === 'sorted') keys.sort();
-  const skipNull = options.skipNull ?? false;
-  const skipEmpty = options.skipEmptyString ?? false;
-  let output = '';
-  let first = true;
-
-  for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
-    const key = keys[keyIndex]!;
-    const raw = input[key];
-    if (raw === undefined) continue;
-    const encodedKey = encodeFormComponent(key);
-
-    if (Array.isArray(raw)) {
-      for (let itemIndex = 0; itemIndex < raw.length; itemIndex++) {
-        const item = raw[itemIndex] as Scalar;
-        if (item === undefined) continue;
-        let value: string | null;
-        if (item === null) value = null;
-        else if (typeof item === 'string') value = item;
-        else if (typeof item === 'number') {
-          if (!Number.isFinite(item)) throw new TypeError('Queryx cannot serialize non-finite numbers');
-          value = String(item);
-        } else if (typeof item === 'bigint' || typeof item === 'boolean') value = String(item);
-        else throw new TypeError(`Unsupported query value: ${typeof item}`);
-
-        if (value === null) {
-          if (skipNull) continue;
-          if (!first) output += '&';
-          output += encodedKey;
-          first = false;
-        } else if (!(skipEmpty && value === '')) {
-          if (!first) output += '&';
-          output += encodedKey + '=' + encodeFormComponent(value);
-          first = false;
-        }
-      }
-      continue;
-    }
-
-    const item = raw as Scalar;
-    let value: string | null;
-    if (item === null || item === undefined) value = null;
-    else if (typeof item === 'string') value = item;
-    else if (typeof item === 'number') {
-      if (!Number.isFinite(item)) throw new TypeError('Queryx cannot serialize non-finite numbers');
-      value = String(item);
-    } else if (typeof item === 'bigint' || typeof item === 'boolean') value = String(item);
-    else throw new TypeError(`Unsupported query value: ${typeof item}`);
-
-    if (value === null) {
-      if (skipNull) continue;
-      if (!first) output += '&';
-      output += encodedKey;
-      first = false;
-    } else if (!(skipEmpty && value === '')) {
-      if (!first) output += '&';
-      output += encodedKey + '=' + encodeFormComponent(value);
-      first = false;
-    }
-  }
-
-  return output;
+  return serialize(input, options, encodeFormComponent);
 }

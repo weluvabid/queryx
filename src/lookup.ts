@@ -1,4 +1,5 @@
 import { componentSpanEquals, decodeComponentSpan } from './codec.js';
+import { appendQueryValue } from './internal/append-value.js';
 import { walk } from './walk.js';
 import type { DecodeMode } from './types.js';
 
@@ -45,12 +46,7 @@ export function pick(input: string, keys: readonly string[], mode: DecodeMode = 
     walk(input, (keyStart, keyEnd, valueStart, valueEnd, hasEquals) => {
       if (!componentSpanEquals(input, keyStart, keyEnd, target, mode)) return;
       const value = hasEquals ? decodeComponentSpan(input, valueStart, valueEnd, mode) : null;
-      if (!Object.hasOwn(result, target)) result[target] = value;
-      else {
-        const previous = result[target]!;
-        if (Array.isArray(previous)) previous.push(value);
-        else result[target] = [previous, value];
-      }
+      appendQueryValue(result, target, value);
     });
     return result;
   }
@@ -59,12 +55,7 @@ export function pick(input: string, keys: readonly string[], mode: DecodeMode = 
     const key = decodeComponentSpan(input, keyStart, keyEnd, mode);
     if (!wanted.has(key)) return;
     const value = hasEquals ? decodeComponentSpan(input, valueStart, valueEnd, mode) : null;
-    if (!Object.hasOwn(result, key)) result[key] = value;
-    else {
-      const previous = result[key]!;
-      if (Array.isArray(previous)) previous.push(value);
-      else result[key] = [previous, value];
-    }
+    appendQueryValue(result, key, value);
   });
   return result;
 }

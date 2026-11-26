@@ -1,4 +1,6 @@
 import { decodeComponentSpan } from './codec.js';
+import { CHAR_CODE } from './internal/constants.js';
+import { findEquals, findSegmentEnd } from './internal/span-cursor.js';
 import type { DecodeMode, ScanEntry } from './types.js';
 
 /** One allocation per entry; decoding methods are shared on the prototype. */
@@ -23,28 +25,21 @@ class ScanEntryImpl implements ScanEntry {
   }
 
   decode(mode: DecodeMode = 'replace'): { key: string; value: string | null } {
-    return {
-      key: this.decodeKey(mode),
-      value: this.decodeValue(mode),
-    };
+    return { key: this.decodeKey(mode), value: this.decodeValue(mode) };
   }
 }
 
 /** Lazily iterate over raw query spans. Component strings are decoded only on demand. */
 export function scan(input: string): IterableIterator<ScanEntry> {
-  let cursor = input.length > 0 && input.charCodeAt(0) === 63 ? 1 : 0;
-  if (cursor < input.length && input.charCodeAt(cursor) === 35) cursor = input.length;
+  const length = input.length;
+  let cursor = length > 0 && input.charCodeAt(0) === CHAR_CODE.QUESTION_MARK ? 1 : 0;
+  if (cursor < length && input.charCodeAt(cursor) === CHAR_CODE.HASH) cursor = length;
+
   return (function* (): IterableIterator<ScanEntry> {
-    while (cursor < input.length) {
-      let end = cursor;
-      while (end < input.length) {
-        const code = input.charCodeAt(end);
-        if (code === 38 || code === 35) break;
-        end++;
-      }
+    while (cursor < length) {
+      const end = findSegmentEnd(input, cursor, length);
       if (end > cursor) {
-        let equals = cursor;
-        while (equals < end && input.charCodeAt(equals) !== 61) equals++;
+        const equals = findEquals(input, cursor, end);
         const hasEquals = equals < end;
         yield new ScanEntryImpl(
           input,
@@ -55,7 +50,7 @@ export function scan(input: string): IterableIterator<ScanEntry> {
           hasEquals,
         );
       }
-      if (end >= input.length || input.charCodeAt(end) === 35) return;
+      if (end >= length || input.charCodeAt(end) === CHAR_CODE.HASH) return;
       cursor = end + 1;
     }
   })();

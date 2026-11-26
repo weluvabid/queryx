@@ -1,23 +1,28 @@
-export type SpanVisitor = (keyStart: number, keyEnd: number, valueStart: number, valueEnd: number, hasEquals: boolean) => boolean | void;
+import { CHAR_CODE } from './internal/constants.js';
+import { findEquals, findSegmentEnd } from './internal/span-cursor.js';
 
+export type SpanVisitor = (
+  keyStart: number,
+  keyEnd: number,
+  valueStart: number,
+  valueEnd: number,
+  hasEquals: boolean,
+) => boolean | void;
+
+/** Visit raw parameter spans without allocating a public ScanEntry per item. */
 export function walk(input: string, visit: SpanVisitor): void {
-  let cursor = input.length > 0 && input.charCodeAt(0) === 63 ? 1 : 0;
-  if (cursor < input.length && input.charCodeAt(cursor) === 35) return;
   const length = input.length;
+  let cursor = length > 0 && input.charCodeAt(0) === CHAR_CODE.QUESTION_MARK ? 1 : 0;
+  if (cursor < length && input.charCodeAt(cursor) === CHAR_CODE.HASH) return;
+
   while (cursor < length) {
-    let end = cursor;
-    while (end < length) {
-      const code = input.charCodeAt(end);
-      if (code === 38 || code === 35) break;
-      end++;
-    }
+    const end = findSegmentEnd(input, cursor, length);
     if (end > cursor) {
-      let equals = cursor;
-      while (equals < end && input.charCodeAt(equals) !== 61) equals++;
+      const equals = findEquals(input, cursor, end);
       const hasEquals = equals < end;
       if (visit(cursor, hasEquals ? equals : end, hasEquals ? equals + 1 : end, end, hasEquals) === false) return;
     }
-    if (end >= length || input.charCodeAt(end) === 35) return;
+    if (end >= length || input.charCodeAt(end) === CHAR_CODE.HASH) return;
     cursor = end + 1;
   }
 }
