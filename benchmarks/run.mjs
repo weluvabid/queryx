@@ -1,7 +1,7 @@
 import { performance } from 'node:perf_hooks';
 import { URLSearchParams } from 'node:url';
 import { get, parse, stringify, stringifyForm } from '../dist/index.js';
-import { encodeComponent, encodeFormComponent } from '../dist/codec.js';
+import { decodeComponent, decodeComponentSpan, encodeComponent, encodeFormComponent } from '../dist/codec.js';
 
 const query = Array.from({ length: 100 }, (_, i) => `key${i}=value%20${i}`).join('&');
 const object = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [`key${i}`, `value ${i}`]));
@@ -63,6 +63,8 @@ function consume(value) {
 }
 
 const nativeParams = new URLSearchParams(query);
+const valueStart = query.indexOf('=') + 1;
+const valueEnd = query.indexOf('&');
 
 const benchmarks = [
   ['QueryX parse', () => parse(query)],
@@ -73,9 +75,13 @@ const benchmarks = [
   ['QueryX stringify (RFC 3986)', () => stringify(object)],
   ['QueryX stringifyForm', () => stringifyForm(object)],
   ['URLSearchParams stringify', () => new URLSearchParams(object).toString()],
+  ['decode span (encoded)', () => decodeComponentSpan(query, valueStart, valueEnd)],
+  ['decode slice (encoded)', () => decodeComponent(query.slice(valueStart, valueEnd))],
+  ['encodeComponent (safe ASCII)', () => encodeComponent('keyName_99-~')],
   ['encodeComponent (ASCII)', () => encodeComponent('value with spaces')],
   ['encodeComponent (reserved)', () => encodeComponent("!'()*~&=/?#")],
   ['encodeComponent (Unicode)', () => encodeComponent('✓ café 東京')],
+  ['encodeFormComponent (no spaces)', () => encodeFormComponent('value-without-spaces')],
   ['encodeFormComponent (spaces)', () => encodeFormComponent('value with spaces')],
   ['encodeFormComponent (reserved)', () => encodeFormComponent("!'()*~&=/?#")],
 ];

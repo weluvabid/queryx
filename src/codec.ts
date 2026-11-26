@@ -12,16 +12,43 @@ function hexValue(code: number): number {
 }
 
 export function decodeComponent(input: string, mode: DecodeMode = 'replace'): string {
+  return decodeComponentSpan(input, 0, input.length, mode);
+}
+
+/** Decode a source span without first allocating an intermediate substring. */
+export function decodeComponentSpan(
+  input: string,
+  start: number,
+  end: number,
+  mode: DecodeMode = 'replace',
+): string {
   let hasPlus = false;
   let hasPercent = false;
-  for (let i = 0; i < input.length; i++) {
+  for (let i = start; i < end; i++) {
     const code = input.charCodeAt(i);
     if (code === 43) hasPlus = true;
     else if (code === 37) hasPercent = true;
     if (hasPlus && hasPercent) break;
   }
-  if (!hasPlus && !hasPercent) return input;
-  const normalized = hasPlus ? input.replace(/\+/g, ' ') : input;
+
+  if (!hasPlus && !hasPercent) return input.slice(start, end);
+
+  let normalized: string;
+  if (hasPlus) {
+    // Build the normalized component in one pass, avoiding a slice followed by
+    // a global replacement. The source span remains untouched.
+    normalized = '';
+    let segmentStart = start;
+    for (let i = start; i < end; i++) {
+      if (input.charCodeAt(i) !== 43) continue;
+      normalized += input.slice(segmentStart, i) + ' ';
+      segmentStart = i + 1;
+    }
+    normalized += input.slice(segmentStart, end);
+  } else {
+    normalized = input.slice(start, end);
+  }
+
   if (!hasPercent) return normalized;
   if (mode === 'throw') return decodeURIComponent(normalized);
   try { return decodeURIComponent(normalized); }
@@ -57,7 +84,26 @@ export function decodeComponent(input: string, mode: DecodeMode = 'replace'): st
   return chunks.join('');
 }
 
+const RFC3986_EXTRA_GLOBAL = /[!'()*]/g;
+
+function isRfc3986SafeAscii(input: string): boolean {
+  for (let i = 0; i < input.length; i++) {
+    const code = input.charCodeAt(i);
+    if (
+      !((code >= 0x41 && code <= 0x5A) ||
+        (code >= 0x61 && code <= 0x7A) ||
+        (code >= 0x30 && code <= 0x39) ||
+        code === 0x2D || code === 0x2E || code === 0x5F || code === 0x7E)
+    ) return false;
+  }
+  return true;
+}
+
 export function encodeComponent(input: string): string {
+  // Keys and identifiers commonly consist entirely of RFC 3986 unreserved
+  // ASCII. Return the original string without invoking the URI encoder.
+  if (isRfc3986SafeAscii(input)) return input;
+
   let encoded: string;
   try {
     encoded = encodeURIComponent(input);
@@ -81,9 +127,58 @@ export function encodeComponent(input: string): string {
     parts.push(input.slice(start));
     encoded = encodeURIComponent(parts.join(''));
   }
-  return encoded.replace(/[!'()*]/g, character => `%${character.charCodeAt(0).toString(16).toUpperCase()}`);
+  return encoded.replace(RFC3986_EXTRA_GLOBAL, character =>
+    `%${character.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
 }
 
 export function encodeFormComponent(input: string): string {
-  return encodeComponent(input).replace(/%20/g, '+');
+  const encoded = encodeComponent(input);
+  const firstSpace = encoded.indexOf('%20');
+  if (firstSpace < 0) return encoded;
+
+  // Convert encoded spaces without a second regex replacement pass.
+  let output = encoded.slice(0, firstSpace);
+  let cursor = firstSpace;
+  while (cursor < encoded.length) {
+    const next = encoded.indexOf('%20', cursor);
+    if (next < 0) {
+      output += encoded.slice(cursor);
+      break;
+    }
+    output += encoded.slice(cursor, next) + '+';
+    cursor = next + 3;
+  }
+  return output;
+}
+
+/** Compare a raw component span with an already-decoded key without allocating
+ * a substring for the common unescaped ASCII/Unicode case. */
+export function componentSpanEquals(
+  input: string,
+  start: number,
+  end: number,
+  expected: string,
+  mode: DecodeMode = 'replace',
+): boolean {
+  // Throw mode must validate every visited component, even when an early
+  // character mismatch would otherwise let the comparison short-circuit.
+  if (mode === 'throw') return decodeComponentSpan(input, start, end, mode) === expected;
+
+  if (end - start !== expected.length) {
+    // Encoded components can shrink during decoding, so only reject a length
+    // mismatch when the source contains no escape or form-space marker.
+    for (let i = start; i < end; i++) {
+      const code = input.charCodeAt(i);
+      if (code === 43 || code === 37) return decodeComponentSpan(input, start, end, mode) === expected;
+    }
+    return false;
+  }
+
+  for (let i = 0; i < expected.length; i++) {
+    const code = input.charCodeAt(start + i);
+    if (code === 43 || code === 37) return decodeComponentSpan(input, start, end, mode) === expected;
+    if (code !== expected.charCodeAt(i)) return false;
+  }
+  return true;
 }

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { get, getAll, has, parse, pick, scan, stringify, stringifyForm } from '../dist/index.js';
+import { decodeComponent, decodeComponentSpan } from '../dist/codec.js';
 
 test('parses ordinary, empty, duplicate, and valueless parameters', () => {
   const result = parse('?a=1&a=2&empty=&flag&=blank&&x=3#fragment');
@@ -29,6 +30,7 @@ test('selective operations preserve duplicate and missing distinctions', () => {
   assert.equal(get(query, 'x'), '1');
   assert.equal(get(query, 'missing'), undefined);
   assert.equal(get(query, 'flag'), null);
+  assert.throws(() => get('x=1&bad%ZZ=y', 'missing', 'throw'), URIError);
   assert.equal(has(query, 'flag'), true);
   assert.equal(has(query, 'missing'), false);
   assert.deepEqual(getAll(query, 'x'), ['1', '2']);
@@ -146,4 +148,42 @@ test('replacement decoding agrees with URLSearchParams on malformed UTF-8', () =
     const expected = new URLSearchParams(`x=${raw}`).get('x');
     assert.equal(parse(`x=${raw}`).x, expected);
   }
+});
+
+test('span decoding matches component decoding without changing source boundaries', () => {
+  const source = 'prefix:a+b%20c:suffix';
+  const start = source.indexOf(':') + 1;
+  const end = source.lastIndexOf(':');
+  assert.equal(decodeComponentSpan(source, start, end), decodeComponent(source.slice(start, end)));
+  assert.equal(decodeComponentSpan(source, start, end), 'a b c');
+  assert.equal(decodeComponentSpan(source, start, end, 'throw'), 'a b c');
+  assert.equal(decodeComponentSpan(source, start, end, 'preserve'), 'a b c');
+  assert.equal(decodeComponentSpan(source, 0, 6), 'prefix');
+});
+
+test('stringifier preserves filtering, encoding, and array semantics', () => {
+  const input = {
+    omitted: undefined,
+    nullValue: null,
+    empty: '',
+    values: [undefined, null, '', 'a b', 0, false, 12n],
+  };
+  assert.equal(
+    stringify(input),
+    'nullValue&empty=&values&values=&values=a%20b&values=0&values=false&values=12',
+  );
+  assert.equal(
+    stringify(input, { skipNull: true, skipEmptyString: true }),
+    'values=a%20b&values=0&values=false&values=12',
+  );
+  assert.equal(stringify({ b: 'two words', a: 'x' }, { encode: false, order: 'sorted' }), 'a=x&b=two words');
+  assert.equal(stringifyForm({ values: [undefined, null, 'a b'] }), 'values&values=a+b');
+});
+
+test('stringifies large flat records without changing ordering or separators', () => {
+  const input = Object.fromEntries(Array.from({ length: 15000 }, (_, index) => [`k${index}`, `v${index}`]));
+  const output = stringify(input);
+  assert.equal(output.split('&').length, 15000);
+  assert.ok(output.startsWith('k0=v0&k1=v1&'));
+  assert.ok(output.endsWith('k14999=v14999'));
 });
