@@ -3,7 +3,9 @@ import { CHAR_CODE } from './constants.js';
 
 const HEX = new Int8Array(128).fill(-1);
 
-for (let i = 0; i < 10; i++) {HEX[48 + i] = i;}
+for (let i = 0; i < 10; i++) {
+  HEX[48 + i] = i;
+}
 
 for (let i = 0; i < 6; i++) {
   HEX[65 + i] = 10 + i;
@@ -11,7 +13,7 @@ for (let i = 0; i < 6; i++) {
 }
 
 function hexValue(code: number): number {
-  return code < 128 ? HEX[code]! : -1;
+  return code < 128 ? (HEX[code] ?? -1) : -1;
 }
 
 export function decodeComponent(input: string, mode: DecodeMode = 'replace'): string {
@@ -31,13 +33,20 @@ export function decodeComponentSpan(
   for (let i = start; i < end; i++) {
     const code = input.charCodeAt(i);
 
-    if (code === CHAR_CODE.PLUS) {hasPlus = true;}
-    else if (code === CHAR_CODE.PERCENT) {hasPercent = true;}
+    if (code === CHAR_CODE.PLUS) {
+      hasPlus = true;
+    } else if (code === CHAR_CODE.PERCENT) {
+      hasPercent = true;
+    }
 
-    if (hasPlus && hasPercent) {break;}
+    if (hasPlus && hasPercent) {
+      break;
+    }
   }
 
-  if (!hasPlus && !hasPercent) {return input.slice(start, end);}
+  if (!hasPlus && !hasPercent) {
+    return input.slice(start, end);
+  }
 
   let normalized: string;
 
@@ -48,9 +57,11 @@ export function decodeComponentSpan(
     let segmentStart = start;
 
     for (let i = start; i < end; i++) {
-      if (input.charCodeAt(i) !== CHAR_CODE.PLUS) {continue;}
+      if (input.charCodeAt(i) !== CHAR_CODE.PLUS) {
+        continue;
+      }
 
-      normalized += `${input.slice(segmentStart, i)  } `;
+      normalized += `${input.slice(segmentStart, i)} `;
       segmentStart = i + 1;
     }
 
@@ -59,9 +70,13 @@ export function decodeComponentSpan(
     normalized = input.slice(start, end);
   }
 
-  if (!hasPercent) {return normalized;}
+  if (!hasPercent) {
+    return normalized;
+  }
 
-  if (mode === 'throw') {return decodeURIComponent(normalized);}
+  if (mode === 'throw') {
+    return decodeURIComponent(normalized);
+  }
 
   try {
     return decodeURIComponent(normalized);
@@ -88,7 +103,9 @@ export function decodeComponentSpan(
       const high = hexValue(normalized.charCodeAt(cursor + 1));
       const low = hexValue(normalized.charCodeAt(cursor + 2));
 
-      if (high < 0 || low < 0) {break;}
+      if (high < 0 || low < 0) {
+        break;
+      }
 
       bytes.push((high << 4) | low);
       cursor += 3;

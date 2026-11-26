@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { get, getAll, has, parse, pick, scan, stringify, stringifyForm } from '../dist/index.js';
 import {
   decodeComponent,
   decodeComponentSpan,

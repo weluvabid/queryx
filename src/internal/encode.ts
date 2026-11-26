@@ -10,8 +10,9 @@ function isRfc3986SafeAscii(input: string): boolean {
       code === 0x2e ||
       code === 0x5f ||
       code === 0x7e
-    ))
-      {return false;}
+    )) {
+      return false;
+    }
   }
 
   return true;
@@ -89,7 +90,9 @@ function escapeRfc3986Extras(encoded: string): string {
 export function encodeComponent(input: string): string {
   // Keys and identifiers commonly consist entirely of RFC 3986 unreserved
   // ASCII. Return the original string without invoking the URI encoder.
-  if (isRfc3986SafeAscii(input)) {return input;}
+  if (isRfc3986SafeAscii(input)) {
+    return input;
+  }
 
   return escapeRfc3986Extras(encodeUriComponent(input));
 }
@@ -99,7 +102,9 @@ export function encodeComponent(input: string): string {
  * Its safe set is alphanumeric plus '*', '-', '.', and '_'; spaces become '+'.
  */
 export function encodeFormComponent(input: string): string {
-  if (isFormSafeAscii(input)) {return input;}
+  if (isFormSafeAscii(input)) {
+    return input;
+  }
 
   const encoded = encodeUriComponent(input);
   let output = '';
@@ -155,8 +160,9 @@ function isFormSafeAscii(input: string): boolean {
       code === 0x2d ||
       code === 0x2e ||
       code === 0x5f
-    ))
-      {return false;}
+    )) {
+      return false;
+    }
   }
 
   return true;

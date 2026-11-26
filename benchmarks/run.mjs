@@ -58,7 +58,9 @@ try {
     console.warn('query-string is installed but exposes an unsupported module shape; skipping it.');
   }
 } catch (error) {
-  if (error?.code !== 'ERR_MODULE_NOT_FOUND' && error?.code !== 'MODULE_NOT_FOUND') {throw error;}
+  if (error?.code !== 'ERR_MODULE_NOT_FOUND' && error?.code !== 'MODULE_NOT_FOUND') {
+    throw error;
+  }
 
   console.warn('query-string is not installed; skipping its optional comparison.');
 }
@@ -67,9 +69,13 @@ function parseNative(input) {
   const result = Object.create(null);
 
   for (const [key, value] of new URLSearchParams(input)) {
-    if (!Object.hasOwn(result, key)) {result[key] = value;}
-    else if (Array.isArray(result[key])) {result[key].push(value);}
-    else {result[key] = [result[key], value];}
+    if (!Object.hasOwn(result, key)) {
+      result[key] = value;
+    } else if (Array.isArray(result[key])) {
+      result[key].push(value);
+    } else {
+      result[key] = [result[key], value];
+    }
   }
 
   return result;
@@ -105,7 +111,9 @@ const benchmarks = [
     () => {
       let count = 0;
 
-      for (const entry of scan(query)) {count += entry.keyEnd - entry.keyStart;}
+      for (const entry of scan(query)) {
+        count += entry.keyEnd - entry.keyStart;
+      }
 
       return count;
     },
@@ -186,7 +194,9 @@ console.log(
 console.log('Samples are run in rotating benchmark order; reported value is the median.');
 
 for (const [, fn] of benchmarks) {
-  for (let i = 0; i < warmupIterations; i++) {fn();}
+  for (let i = 0; i < warmupIterations; i++) {
+    fn();
+  }
 }
 
 const timings = benchmarks.map(([name]) => [name, []]);
@@ -197,11 +207,14 @@ for (let sample = 0; sample < samplesCount; sample++) {
 
   for (let index = 0; index < benchmarks.length; index++) {
     const benchmarkIndex = (index + offset) % benchmarks.length;
-    const [name, fn] = benchmarks[benchmarkIndex];
+    const benchmark = benchmarks[benchmarkIndex];
+    const fn = benchmark[1];
     let result;
     const start = performance.now();
 
-    for (let i = 0; i < iterations; i++) {result = fn();}
+    for (let i = 0; i < iterations; i++) {
+      result = fn();
+    }
 
     const elapsed = performance.now() - start;
 

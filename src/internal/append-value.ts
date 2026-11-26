@@ -10,8 +10,13 @@ export function appendQueryValue(
     return;
   }
 
-  const previous = target[key]!;
+  const previous = target[key];
 
-  if (Array.isArray(previous)) {previous.push(value);}
-  else {target[key] = [previous, value];}
+  if (previous === undefined) {
+    target[key] = value;
+  } else if (Array.isArray(previous)) {
+    previous.push(value);
+  } else {
+    target[key] = [previous, value];
+  }
 }

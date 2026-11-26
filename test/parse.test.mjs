@@ -1,12 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { get, getAll, has, parse, pick, scan, stringify, stringifyForm } from '../dist/index.js';
-import {
-  decodeComponent,
-  decodeComponentSpan,
-  encodeComponent,
-  encodeFormComponent,
-} from '../dist/codec.js';
+import { parse } from '../dist/index.js';
 
 test('parses ordinary, empty, duplicate, and valueless parameters', () => {
   const result = parse('?a=1&a=2&empty=&flag&=blank&&x=3#fragment');

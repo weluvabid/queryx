@@ -67,4 +67,10 @@ export default tseslint.config(
       '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: false }],
     },
   },
+  {
+    files: ['benchmarks/**/*.mjs'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
 );

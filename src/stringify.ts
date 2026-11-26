@@ -12,18 +12,21 @@ function serialize(
 ): string {
   const keys = Object.keys(input);
 
-  if (options.order === 'sorted') {keys.sort();}
+  if (options.order === 'sorted') {
+    keys.sort();
+  }
 
   const skipNull = options.skipNull ?? false;
   const skipEmpty = options.skipEmptyString ?? false;
   let output = '';
   let first = true;
 
-  for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
-    const key = keys[keyIndex]!;
+  for (const key of keys) {
     const raw = input[key];
 
-    if (raw === undefined) {continue;}
+    if (raw === undefined) {
+      continue;
+    }
 
     const encodedKey = encoder ? encoder(key) : key;
     const array = Array.isArray(raw) ? raw : undefined;
@@ -34,25 +37,35 @@ function serialize(
     while (array ? itemIndex < array.length : itemIndex === 0) {
       const item = (array ? array[itemIndex++] : (itemIndex++, raw)) as Scalar;
 
-      if (item === undefined) {continue;}
+      if (item === undefined) {
+        continue;
+      }
 
       const value = toQueryScalar(item);
 
       if (value === null) {
-        if (skipNull) {continue;}
+        if (skipNull) {
+          continue;
+        }
 
-        if (!first) {output += '&';}
+        if (!first) {
+          output += '&';
+        }
 
         output += encodedKey;
         first = false;
         continue;
       }
 
-      if (skipEmpty && value === '') {continue;}
+      if (skipEmpty && value === '') {
+        continue;
+      }
 
-      if (!first) {output += '&';}
+      if (!first) {
+        output += '&';
+      }
 
-      output += `${encodedKey  }=${  encoder ? encoder(value) : value}`;
+      output += `${encodedKey}=${encoder ? encoder(value) : value}`;
       first = false;
     }
   }

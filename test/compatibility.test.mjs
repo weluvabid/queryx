@@ -1,12 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { get, getAll, has, parse, pick, scan, stringify, stringifyForm } from '../dist/index.js';
-import {
-  decodeComponent,
-  decodeComponentSpan,
-  encodeComponent,
-  encodeFormComponent,
-} from '../dist/codec.js';
+import { get, parse } from '../dist/index.js';
 
 test('matches URLSearchParams for valid form-query pairs', () => {
   let seed = 0x12345678;
@@ -27,9 +21,13 @@ test('matches URLSearchParams for valid form-query pairs', () => {
       const keyLength = random() % 12;
       const valueLength = random() % 20;
 
-      for (let j = 0; j < keyLength; j++) {key += alphabet[random() % alphabet.length];}
+      for (let j = 0; j < keyLength; j++) {
+        key += alphabet[random() % alphabet.length];
+      }
 
-      for (let j = 0; j < valueLength; j++) {value += alphabet[random() % alphabet.length];}
+      for (let j = 0; j < valueLength; j++) {
+        value += alphabet[random() % alphabet.length];
+      }
 
       pairs.push([key, value]);
     }
@@ -40,16 +38,22 @@ test('matches URLSearchParams for valid form-query pairs', () => {
     for (const [key, value] of new URLSearchParams(query)) {
       const previous = expected.get(key);
 
-      if (previous === undefined) {expected.set(key, value);}
-      else if (Array.isArray(previous)) {previous.push(value);}
-      else {expected.set(key, [previous, value]);}
+      if (previous === undefined) {
+        expected.set(key, value);
+      } else if (Array.isArray(previous)) {
+        previous.push(value);
+      } else {
+        expected.set(key, [previous, value]);
+      }
     }
 
     const actual = parse(query);
 
     assert.deepEqual(Object.keys(actual).sort(), [...expected.keys()].sort());
 
-    for (const [key, value] of expected) {assert.deepEqual(actual[key], value);}
+    for (const [key, value] of expected) {
+      assert.deepEqual(actual[key], value);
+    }
   }
 });
 
@@ -75,7 +79,9 @@ test('replacement decoding agrees with URLSearchParams on malformed UTF-8', () =
     for (let i = 0; i < length; i++) {
       raw += `%${(random() % 256).toString(16).padStart(2, '0')}`;
 
-      if (random() % 5 === 0) {raw += 'x';}
+      if (random() % 5 === 0) {
+        raw += 'x';
+      }
     }
 
     const expected = new URLSearchParams(`x=${raw}`).get('x');

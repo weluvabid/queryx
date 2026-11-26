@@ -1,12 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { get, getAll, has, parse, pick, scan, stringify, stringifyForm } from '../dist/index.js';
-import {
-  decodeComponent,
-  decodeComponentSpan,
-  encodeComponent,
-  encodeFormComponent,
-} from '../dist/codec.js';
+import { get, scan } from '../dist/index.js';
 
 test('scan exposes raw spans and defers decoding', () => {
   const [entry] = [...scan('?a%20b=c+d')];

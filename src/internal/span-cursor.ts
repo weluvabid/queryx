@@ -7,7 +7,9 @@ export function findSegmentEnd(input: string, start: number, length: number): nu
   while (end < length) {
     const code = input.charCodeAt(end);
 
-    if (code === CHAR_CODE.AMPERSAND || code === CHAR_CODE.HASH) {break;}
+    if (code === CHAR_CODE.AMPERSAND || code === CHAR_CODE.HASH) {
+      break;
+    }
 
     end++;
   }
@@ -19,7 +21,9 @@ export function findSegmentEnd(input: string, start: number, length: number): nu
 export function findEquals(input: string, start: number, end: number): number {
   let equals = start;
 
-  while (equals < end && input.charCodeAt(equals) !== CHAR_CODE.EQUALS) {equals++;}
+  while (equals < end && input.charCodeAt(equals) !== CHAR_CODE.EQUALS) {
+    equals++;
+  }
 
   return equals;
 }

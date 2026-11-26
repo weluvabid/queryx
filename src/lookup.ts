@@ -12,7 +12,9 @@ export function get(
   let value: string | null | undefined;
 
   walk(input, (keyStart, keyEnd, valueStart, valueEnd, hasEquals) => {
-    if (!componentSpanEquals(input, keyStart, keyEnd, key, mode)) {return;}
+    if (!componentSpanEquals(input, keyStart, keyEnd, key, mode)) {
+      return;
+    }
 
     found = true;
     value = hasEquals ? decodeComponentSpan(input, valueStart, valueEnd, mode) : null;
@@ -45,8 +47,9 @@ export function getAll(
   const values: (string | null)[] = [];
 
   walk(input, (keyStart, keyEnd, valueStart, valueEnd, hasEquals) => {
-    if (componentSpanEquals(input, keyStart, keyEnd, key, mode))
-      {values.push(hasEquals ? decodeComponentSpan(input, valueStart, valueEnd, mode) : null);}
+    if (componentSpanEquals(input, keyStart, keyEnd, key, mode)) {
+      values.push(hasEquals ? decodeComponentSpan(input, valueStart, valueEnd, mode) : null);
+    }
   });
 
   return values;
@@ -60,7 +63,9 @@ export function pick(
   const wanted = new Set(keys);
   const result = Object.create(null) as Record<string, string | null | (string | null)[]>;
 
-  if (wanted.size === 0) {return result;}
+  if (wanted.size === 0) {
+    return result;
+  }
 
   // A single requested key can be compared against raw spans without decoding
   // every input key. Multi-key selection keeps Set membership for O(1) lookup.
@@ -68,7 +73,9 @@ export function pick(
     const target = wanted.values().next().value as string;
 
     walk(input, (keyStart, keyEnd, valueStart, valueEnd, hasEquals) => {
-      if (!componentSpanEquals(input, keyStart, keyEnd, target, mode)) {return;}
+      if (!componentSpanEquals(input, keyStart, keyEnd, target, mode)) {
+        return;
+      }
 
       const value = hasEquals ? decodeComponentSpan(input, valueStart, valueEnd, mode) : null;
 
@@ -81,7 +88,9 @@ export function pick(
   walk(input, (keyStart, keyEnd, valueStart, valueEnd, hasEquals) => {
     const key = decodeComponentSpan(input, keyStart, keyEnd, mode);
 
-    if (!wanted.has(key)) {return;}
+    if (!wanted.has(key)) {
+      return;
+    }
 
     const value = hasEquals ? decodeComponentSpan(input, valueStart, valueEnd, mode) : null;
 
