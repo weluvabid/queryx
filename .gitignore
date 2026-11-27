@@ -3,4 +3,3 @@ dist/
 coverage/
 *.tgz
 .idea/
-bencher-results.json

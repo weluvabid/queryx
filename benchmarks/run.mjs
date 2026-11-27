@@ -1,4 +1,3 @@
-import { writeFile } from 'node:fs/promises';
 import { performance } from 'node:perf_hooks';
 import { URLSearchParams } from 'node:url';
 import { get, parse, pick, scan, stringify, stringifyForm } from '../dist/index.js';
@@ -36,12 +35,6 @@ const mixedObject = Object.fromEntries(
 const iterations = Number(process.env.ITERATIONS ?? 100_000);
 const samplesCount = Number(process.env.SAMPLES ?? 5);
 const warmupIterations = Number(process.env.WARMUP ?? 2_000);
-const bencherOutputIndex = process.argv.indexOf('--bencher-output');
-const bencherOutput = bencherOutputIndex === -1 ? undefined : process.argv[bencherOutputIndex + 1];
-
-if (bencherOutputIndex !== -1 && (!bencherOutput || bencherOutput.startsWith('--'))) {
-  throw new TypeError('--bencher-output requires a file path');
-}
 
 for (const [name, value, minimum] of [
   ['ITERATIONS', iterations, 1],
@@ -230,8 +223,6 @@ for (let sample = 0; sample < samplesCount; sample++) {
   }
 }
 
-const bencherResults = {};
-
 for (const [name, samples] of timings) {
   samples.sort((a, b) => a - b);
   const elapsed = samples[Math.floor(samples.length / 2)];
@@ -242,16 +233,6 @@ for (const [name, samples] of timings) {
     `${name.padEnd(38)} ${throughput.toFixed(0).padStart(10)} ops/s  ` +
       `${(latencyNanoseconds / 1_000).toFixed(2)} µs/op`,
   );
-
-  bencherResults[name] = {
-    latency: { value: latencyNanoseconds },
-    throughput: { value: throughput },
-  };
-}
-
-if (bencherOutput) {
-  await writeFile(bencherOutput, `${JSON.stringify(bencherResults, null, 2)}\n`);
-  console.log(`Bencher results: ${bencherOutput}`);
 }
 
 console.log(`Benchmark sink: ${blackhole}`);
